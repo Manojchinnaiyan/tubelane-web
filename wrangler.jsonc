@@ -1,0 +1,30 @@
+// ── Wrangler config — Cloudflare Workers static-assets deployment ─────────
+// This config tells Wrangler to deploy the contents of ./dist as a
+// static-assets-only Worker. No JS executes at the edge — every request
+// just serves a file from dist/, exactly like Pages.
+//
+// Used because the Workers & Pages dashboard now defaults new projects to
+// the Worker config flow. If you ever switch to the Pages-specific flow
+// you can delete this file (Pages doesn't need it).
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "tubelane-web",
+
+  // The compat date pins the runtime feature set. Bump on each deploy
+  // when you want to opt into newer Workers runtime APIs; for a pure
+  // static-assets site it doesn't really matter.
+  "compatibility_date": "2026-05-07",
+
+  // Static assets — no entry-point script. Wrangler will serve files
+  // directly from ./dist with sensible 404 handling.
+  "assets": {
+    "directory": "./dist",
+    "not_found_handling": "404-page"
+  },
+
+  // Build observability: keep logs tiny, no metrics. Static sites
+  // produce ~zero runtime activity so this is mostly a no-op.
+  "observability": {
+    "enabled": true
+  }
+}
