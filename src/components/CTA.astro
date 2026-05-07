@@ -1,8 +1,13 @@
 ---
 // ── CTA ─────────────────────────────────────────────────────────────────────
-// Last-chance email-grab + DM CTA. Styled like a terminal box. Form posts
-// to a placeholder endpoint — wire to ConvertKit / Beehiiv / Resend on
-// deploy.
+// Last-chance email-grab + DM CTA. Styled like a terminal box.
+//
+// Form posts to /api/subscribe — handled by the Worker in src/worker.ts.
+// Two paths handled:
+//   • JS enabled  → fetch() POST + inline status banner (no page reload)
+//   • JS disabled → native form POST → Worker redirects to /?signup=ok
+//                   → tiny script below reads the query param and shows
+//                     the same banner. Fully accessible without JS.
 ---
 
 <section id="beta" class="border-t border-surface-700 relative overflow-hidden" data-spotlight>
@@ -23,8 +28,9 @@
 
     <form
       class="reveal flex flex-col sm:flex-row items-stretch gap-2 max-w-lg mx-auto"
-      action="https://formspree.io/f/REPLACE_ME"
+      action="/api/subscribe"
       method="POST"
+      data-signup-form
     >
       <label class="sr-only" for="email">Email</label>
       <input
@@ -34,18 +40,99 @@
         required
         autocomplete="email"
         placeholder="you@channel.com"
-        class="flex-1 bg-surface-700 border border-surface-600 px-4 py-3 text-sm font-mono text-surface-50 placeholder:text-surface-500 focus:outline-none focus:border-accent"
+        class="flex-1 bg-surface-700 border border-surface-600 px-4 py-3 text-sm font-mono text-surface-50 placeholder:text-surface-500 focus:outline-none focus:border-surface-400"
       />
       <button
         type="submit"
-        class="px-5 py-3 bg-brand-500 text-surface-900 text-sm font-mono font-semibold hover:bg-brand-400 transition-colors"
+        class="px-5 py-3 bg-brand-500 text-surface-900 text-sm font-mono font-semibold hover:bg-brand-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        data-signup-submit
       >
         [request_access]
       </button>
     </form>
+
+    {/* Inline status banner — shown after a successful or failed submit.
+        Pre-rendered hidden; toggled by the script below. The role="status"
+        announcement makes it accessible to screen readers automatically. */}
+    <div
+      class="reveal mt-5 mx-auto max-w-lg hidden text-sm font-mono px-4 py-3 border"
+      role="status"
+      aria-live="polite"
+      data-signup-status
+    ></div>
 
     <p class="reveal mt-6 text-[10px] font-mono text-surface-500">
       or DM <a href="https://twitter.com/intent/tweet?text=Tubelane" class="text-surface-300 hover:text-accent underline underline-offset-2">@tubelane</a> on X with the word "Tubelane"
     </p>
   </div>
 </section>
+
+<script>
+  // ── Progressive-enhancement form handler ─────────────────────────────────
+  // The form has a real action="/api/subscribe" so it works without JS:
+  // the Worker redirects to /?signup=ok (or =error/=invalid). This script
+  // hijacks the submit, posts JSON instead, and renders an inline banner
+  // — same end result, no full-page reload.
+  const form = document.querySelector<HTMLFormElement>("[data-signup-form]");
+  const status = document.querySelector<HTMLElement>("[data-signup-status]");
+  const submitBtn = document.querySelector<HTMLButtonElement>("[data-signup-submit]");
+
+  const showStatus = (kind: "ok" | "error" | "invalid", text: string) => {
+    if (!status) return;
+    status.textContent = text;
+    status.className = [
+      "reveal mt-5 mx-auto max-w-lg text-sm font-mono px-4 py-3 border",
+      kind === "ok"
+        ? "border-surface-50 text-surface-50 bg-surface-50/5"
+        : "border-red-500/60 text-red-400 bg-red-500/5",
+    ].join(" ");
+    status.classList.add("is-visible"); // override the .reveal hidden state
+  };
+
+  if (form && submitBtn && status) {
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const data = new FormData(form);
+      const email = String(data.get("email") || "").trim();
+      if (!email) {
+        showStatus("invalid", "✗ enter an email");
+        return;
+      }
+      submitBtn.disabled = true;
+      submitBtn.textContent = "[sending…]";
+      try {
+        const res = await fetch("/api/subscribe", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ email }),
+        });
+        const json = (await res.json()) as { ok: boolean; error?: string };
+        if (json.ok) {
+          showStatus("ok", "✓ on the list. you'll hear from us when the build's ready.");
+          form.reset();
+        } else {
+          showStatus("error", `✗ ${json.error ?? "couldn't save your email"}`);
+        }
+      } catch {
+        showStatus("error", "✗ network error — try again in a moment");
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = "[request_access]";
+      }
+    });
+  }
+
+  // ── No-JS fallback path ─────────────────────────────────────────────────
+  // If a user submitted without JS, the Worker redirected to /?signup=ok
+  // (or =error / =invalid). Read that param and surface the same banner.
+  const params = new URLSearchParams(globalThis.location.search);
+  const signup = params.get("signup");
+  if (signup === "ok") {
+    showStatus("ok", "✓ on the list. you'll hear from us when the build's ready.");
+    history.replaceState({}, "", globalThis.location.pathname + "#beta");
+  } else if (signup === "error") {
+    showStatus("error", "✗ couldn't save your email — try again");
+  } else if (signup === "invalid") {
+    showStatus("invalid", "✗ that didn't look like a valid email");
+  }
+</script>

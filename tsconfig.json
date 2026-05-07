@@ -6,6 +6,10 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["src/*"]
-    }
+    },
+    // Pull in Cloudflare Workers types (D1Database, KVNamespace, etc.)
+    // alongside DOM types — the Worker uses `crypto.subtle` from the
+    // standard Web Crypto API, which lives in lib.dom.
+    "types": ["@cloudflare/workers-types", "astro/client"]
   }
 }
