@@ -1,0 +1,670 @@
+---
+// ── Pipeline (Vertical timeline with bespoke visuals) ───────────────────────
+// Each of the six stages gets its OWN mini-demonstration baked into the
+// card — instead of "6 identical cards with different text", each card
+// looks like a tiny product screenshot of that pipeline stage:
+//
+//   01 script       → streaming Claude terminal with JSONL scenes
+//   02 voice        → voice cast list + animated EQ bars
+//   03 scene plan   → horizontal scene-strip with timestamp markers
+//   04 image gen    → grid of thumbnails shimmering in
+//   05 captions     → animated word-by-word TikTok-style captions
+//   06 upload       → YouTube card mockup with rising view counter
+//
+// Vertical spine fills cyan progressively (driven by scroll-through-section
+// progress); each node lights up when its centre crosses the viewport
+// midpoint. Cards alternate left/right of the spine on desktop.
+
+type StepVisual = "script" | "voice" | "scenes" | "images" | "captions" | "upload";
+interface PipelineStep {
+  cmd: string;
+  title: string;
+  desc: string;
+  model: string;
+  visual: StepVisual;
+}
+
+// Syntax-coloured Claude streaming output for the script-card visual.
+// Built as a string and injected via set:html so the `{` and `}` literals
+// don't collide with Astro's JSX-style curly-brace expressions.
+const SCRIPT_HTML = [
+  '<span class="t-key">{</span>"plan":12,"why":"hook+contrast"<span class="t-key">}</span>',
+  '<span class="t-key">{</span>"s":0,"e":7.2,"text":"They told you to..."<span class="t-key">}</span>',
+  '<span class="t-key">{</span>"s":7.2,"e":13.4,"text":"But here is what..."<span class="t-key">}</span>',
+  '<span class="t-key">{</span>"s":13.4,"e":19.0,"text":"<span class="t-cursor">▌</span>"',
+].join("\n");
+
+const STEPS: PipelineStep[] = [
+  {
+    cmd: "$ script_generation",
+    title: "Topic → script",
+    desc: "Claude reads the brief, picks a structure, drafts a script tuned for retention. Streams scene-by-scene.",
+    model: "Claude Opus / Sonnet / Haiku",
+    visual: "script",
+  },
+  {
+    cmd: "$ voice_synthesis",
+    title: "Script → voice cast",
+    desc: "Per-character voice. Mix Google Cloud TTS, ElevenLabs, or local Chatterbox neural in the same pipeline.",
+    model: "Google · ElevenLabs · Chatterbox",
+    visual: "voice",
+  },
+  {
+    cmd: "$ scene_planning",
+    title: "Voice → scene plan",
+    desc: "Whisper transcribes word-level. Claude segments into scenes anchored to actual word boundaries.",
+    model: "Whisper + Claude",
+    visual: "scenes",
+  },
+  {
+    cmd: "$ image_generation",
+    title: "Prompts → visuals",
+    desc: "Imagen 4 Ultra for photoreal. Gemini 3 for fast iteration. OpenAI as fallback. Mix per-scene.",
+    model: "Imagen 4 · Gemini 3 · DALL·E 3",
+    visual: "images",
+  },
+  {
+    cmd: "$ caption_render",
+    title: "Audio → captions",
+    desc: "Word-level timestamped subtitles burned into the export with TikTok-style word-by-word highlighting.",
+    model: "OpenAI Whisper",
+    visual: "captions",
+  },
+  {
+    cmd: "$ youtube_upload",
+    title: "Render → upload",
+    desc: "ffmpeg muxes the final MP4. OAuth pushes to YouTube with title, description, tags, thumbnail.",
+    model: "Native ffmpeg + YouTube API",
+    visual: "upload",
+  },
+];
+---
+
+<section id="pipeline" class="border-t border-surface-700 relative" data-timeline>
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 py-20 sm:py-32">
+    <div class="reveal max-w-2xl mb-20">
+      <p class="text-xs font-mono text-accent mb-3 tracking-wider">$ pipeline</p>
+      <h2 class="text-3xl sm:text-5xl font-semibold tracking-tight text-surface-50 mb-4 leading-[1.1]">
+        Six stages.<br/>
+        <span class="text-surface-400">Six different generative models.</span><br/>
+        One coherent pipeline.
+      </h2>
+      <p class="text-surface-300 leading-relaxed text-base sm:text-lg max-w-xl">
+        Most creator tools ship one AI feature. Tubelane stitches the entire
+        pipeline together — each stage uses the model that's actually best
+        for that job.
+      </p>
+    </div>
+
+    <div class="relative">
+      {/* Spine — base track + dynamic-height progress fill */}
+      <div class="absolute top-0 bottom-0 left-6 md:left-1/2 -translate-x-px w-px bg-surface-700"></div>
+      <div
+        class="absolute top-0 left-6 md:left-1/2 -translate-x-px w-px bg-gradient-to-b from-accent via-accent/50 to-transparent"
+        data-timeline-progress
+        style="height: 0%;"
+      ></div>
+
+      <ol class="space-y-16 sm:space-y-24 relative">
+        {STEPS.map((s, i) => {
+          const onLeft = i % 2 === 0;
+          return (
+            <li class="relative md:grid md:grid-cols-2 md:gap-12 items-center" data-timeline-step>
+              {/* Spine node */}
+              <div
+                class="absolute left-6 md:left-1/2 -translate-x-1/2 -translate-y-1/2 top-6 md:top-1/2 z-10 timeline-node"
+                aria-hidden="true"
+              >
+                <div class="timeline-node-ring"></div>
+                <div class="timeline-node-dot">{String(i + 1).padStart(2, "0")}</div>
+              </div>
+
+              {!onLeft && <div class="hidden md:block"></div>}
+
+              <div class={`reveal pl-20 md:pl-0 ${onLeft ? "md:pr-12" : "md:pl-12"}`}>
+                <div class="step-card relative bg-surface-800 border border-surface-700 hover:border-surface-500 transition-colors rounded overflow-hidden group">
+                  {/* Bespoke visual for this step — each is a different mini-mock */}
+                  <div class={`step-visual step-visual-${s.visual}`}>
+                    {/* ──────── 01 · SCRIPT — streaming Claude terminal ─── */}
+                    {s.visual === "script" && (
+                      <div class="step-script-wrap">
+                        <div class="step-script-bar">
+                          <span></span><span></span><span></span>
+                          <span class="step-script-title">claude · streaming</span>
+                        </div>
+                        <pre class="step-script-pre" set:html={SCRIPT_HTML}></pre>
+                      </div>
+                    )}
+
+                    {/* ──────── 02 · VOICE — cast list + EQ bars ───────── */}
+                    {s.visual === "voice" && (
+                      <div class="step-voice-wrap">
+                        <ul class="step-voice-cast">
+                          {[
+                            { name: "Sarah",  voice: "elevenlabs · Bella",       speaking: true },
+                            { name: "David",  voice: "google · en-US-Neural2-D" },
+                            { name: "Narrator", voice: "chatterbox · default" },
+                          ].map((v) => (
+                            <li class="step-voice-row">
+                              <span class="step-voice-name">{v.name}</span>
+                              <span class="step-voice-meta">{v.voice}</span>
+                              {v.speaking && (
+                                <div class="step-voice-eq">
+                                  <span></span><span></span><span></span><span></span><span></span>
+                                </div>
+                              )}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {/* ──────── 03 · SCENE PLAN — film strip with markers */}
+                    {s.visual === "scenes" && (
+                      <div class="step-scenes-wrap">
+                        <div class="step-scenes-strip">
+                          {Array.from({ length: 12 }).map((_, idx) => (
+                            <div class="step-scenes-cell" style={`animation-delay: ${idx * 60}ms;`}>
+                              <span class="step-scenes-num">{String(idx + 1).padStart(2, "0")}</span>
+                            </div>
+                          ))}
+                        </div>
+                        <div class="step-scenes-axis">
+                          {["0:00","0:30","1:00","1:30","2:00","2:30"].map((t) => (
+                            <span class="step-scenes-tick">{t}</span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* ──────── 04 · IMAGES — shimmer-in thumbs grid ────── */}
+                    {s.visual === "images" && (
+                      <div class="step-images-wrap">
+                        <div class="step-images-models">
+                          {["imagen 4 ultra", "gemini 3 pro", "dall·e 3"].map((m, idx) => (
+                            <span class={`step-images-model ${idx === 0 ? "is-active" : ""}`}>{m}</span>
+                          ))}
+                        </div>
+                        <div class="step-images-grid">
+                          {Array.from({ length: 6 }).map((_, idx) => (
+                            <div
+                              class="step-images-thumb"
+                              style={`animation-delay: ${idx * 120}ms;`}
+                            >
+                              <div
+                                class="step-images-art"
+                                style={`
+                                  background: radial-gradient(120% 80% at ${15 + idx * 14}% ${30 + (idx % 3) * 20}%,
+                                    color-mix(in srgb, var(--accent) ${30 - idx * 4}%, transparent),
+                                    transparent 60%),
+                                    linear-gradient(135deg, var(--surface-700), var(--surface-800));
+                                `}
+                              ></div>
+                              <span class="step-images-num">{String(idx + 1).padStart(2, "0")}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* ──────── 05 · CAPTIONS — animated word pop ───────── */}
+                    {s.visual === "captions" && (
+                      <div class="step-captions-wrap">
+                        <div class="step-captions-stage">
+                          <div class="step-captions-grid"></div>
+                          <div class="step-captions-line">
+                            {["YOU", "WON'T", "BELIEVE", "THIS"].map((w, idx) => (
+                              <span
+                                class={`step-cap-word ${idx === 1 ? "is-active" : ""}`}
+                                style={`animation-delay: ${idx * 0.2}s;`}
+                              >{w}</span>
+                            ))}
+                          </div>
+                          <div class="step-captions-meta">
+                            <span>0:14</span> · <span>word-level · 86 wpm</span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* ──────── 06 · UPLOAD — YouTube card + counters ───── */}
+                    {s.visual === "upload" && (
+                      <div class="step-upload-wrap">
+                        <div class="step-upload-thumb">
+                          <div class="step-upload-thumbart"></div>
+                          <span class="step-upload-duration">12:31</span>
+                          <div class="step-upload-progress">
+                            <div class="step-upload-bar"></div>
+                          </div>
+                        </div>
+                        <div class="step-upload-meta">
+                          <p class="step-upload-title">Why interest rates actually matter</p>
+                          <p class="step-upload-channel">Income Decoded · just now</p>
+                          <ul class="step-upload-stats">
+                            <li><span class="step-upload-stat" data-count-to="1247">0</span><span>views</span></li>
+                            <li><span class="step-upload-stat" data-count-to="184">0</span><span>likes</span></li>
+                            <li><span class="step-upload-stat" data-count-to="23">0</span><span>comments</span></li>
+                          </ul>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Card text block — same for every step but laid out
+                      consistently so the pages don't feel chaotic */}
+                  <div class={`step-text ${onLeft ? "md:text-right" : ""}`}>
+                    <div class={`flex items-baseline gap-3 mb-3 ${onLeft ? "md:justify-end" : ""}`}>
+                      <span class="text-[10px] font-mono text-accent tracking-wider">{s.cmd}</span>
+                    </div>
+                    <h3 class="text-xl sm:text-2xl font-semibold text-surface-50 mb-3 leading-tight">{s.title}</h3>
+                    <p class="text-sm text-surface-300 leading-relaxed">{s.desc}</p>
+                    <div class={`text-[10px] font-mono text-surface-500 border-t border-surface-700 pt-3 mt-5 ${onLeft ? "md:text-right" : ""}`}>
+                      <span class="text-surface-400">model:</span> {s.model}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {onLeft && <div class="hidden md:block"></div>}
+            </li>
+          );
+        })}
+      </ol>
+    </div>
+  </div>
+</section>
+
+<style>
+  /* ── Spine node — same as before ──────────────────────────────────────── */
+  .timeline-node { width: 44px; height: 44px; display: grid; place-items: center; }
+  .timeline-node-ring {
+    position: absolute; inset: 0; border-radius: 9999px;
+    border: 1px solid var(--surface-600);
+    transition: border-color 400ms, box-shadow 400ms, transform 400ms;
+  }
+  .timeline-node-dot {
+    position: relative; width: 28px; height: 28px; border-radius: 9999px;
+    background: var(--surface-900); border: 1px solid var(--surface-600);
+    color: var(--surface-400); font-family: var(--font-mono);
+    font-size: 10px; font-weight: 600;
+    display: grid; place-items: center;
+    transition: background 400ms, color 400ms, border-color 400ms, transform 400ms;
+  }
+  [data-timeline-step].is-active .timeline-node-ring {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 15%, transparent);
+    transform: scale(1.06);
+  }
+  [data-timeline-step].is-active .timeline-node-dot {
+    background: var(--accent); color: var(--surface-900);
+    border-color: var(--accent); transform: scale(1.1);
+  }
+
+  /* ── Card frame ────────────────────────────────────────────────────────── */
+  .step-card { display: flex; flex-direction: column; }
+  .step-visual { padding: 18px 20px 4px; border-bottom: 1px dashed var(--surface-700); }
+  .step-text   { padding: 18px 20px 22px; }
+
+  /* ──────────── 01 · SCRIPT — streaming terminal ─────────────────────── */
+  .step-script-wrap {
+    background: var(--surface-900);
+    border: 1px solid var(--surface-700);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .step-script-bar {
+    display: flex; align-items: center; gap: 6px;
+    padding: 6px 10px;
+    border-bottom: 1px solid var(--surface-700);
+    background: var(--surface-800);
+  }
+  .step-script-bar > span:nth-child(1) { width: 8px; height: 8px; border-radius: 9999px; background: rgba(239,68,68,0.6); }
+  .step-script-bar > span:nth-child(2) { width: 8px; height: 8px; border-radius: 9999px; background: rgba(234,179,8,0.6); }
+  .step-script-bar > span:nth-child(3) { width: 8px; height: 8px; border-radius: 9999px; background: rgba(34,197,94,0.6); }
+  .step-script-title {
+    margin-left: 4px; font-family: var(--font-mono); font-size: 9px; color: var(--surface-500);
+  }
+  .step-script-pre {
+    padding: 10px 12px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    line-height: 1.7;
+    color: var(--surface-200);
+    white-space: pre-wrap;
+    margin: 0;
+  }
+  .step-script-pre .t-key { color: var(--accent); }
+  .step-script-pre .t-cursor {
+    color: var(--accent);
+    animation: blinkCaret 1s steps(2) infinite;
+  }
+  @keyframes blinkCaret { to { opacity: 0; } }
+
+  /* ──────────── 02 · VOICE — cast + EQ bars ──────────────────────────── */
+  .step-voice-wrap {
+    background: var(--surface-900);
+    border: 1px solid var(--surface-700);
+    border-radius: 4px;
+    padding: 10px 12px;
+  }
+  .step-voice-cast { display: flex; flex-direction: column; gap: 6px; margin: 0; padding: 0; list-style: none; }
+  .step-voice-row {
+    display: flex; align-items: center; gap: 8px;
+    padding: 6px 8px;
+    background: var(--surface-800);
+    border: 1px solid var(--surface-700);
+    border-radius: 3px;
+  }
+  .step-voice-name {
+    font-family: var(--font-mono); font-size: 11px; font-weight: 600;
+    color: var(--surface-100); min-width: 60px;
+  }
+  .step-voice-meta {
+    flex: 1;
+    font-family: var(--font-mono); font-size: 9px;
+    color: var(--surface-500); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .step-voice-eq {
+    display: flex; align-items: end; gap: 2px; height: 16px;
+  }
+  .step-voice-eq > span {
+    width: 2px; background: var(--accent);
+    transform-origin: bottom;
+    animation: eqPulse 0.7s ease-in-out infinite alternate;
+  }
+  .step-voice-eq > span:nth-child(1) { height: 60%; animation-delay: 0s; }
+  .step-voice-eq > span:nth-child(2) { height: 100%; animation-delay: 0.1s; }
+  .step-voice-eq > span:nth-child(3) { height: 70%; animation-delay: 0.2s; }
+  .step-voice-eq > span:nth-child(4) { height: 90%; animation-delay: 0.3s; }
+  .step-voice-eq > span:nth-child(5) { height: 50%; animation-delay: 0.4s; }
+  @keyframes eqPulse {
+    from { transform: scaleY(0.4); }
+    to   { transform: scaleY(1); }
+  }
+
+  /* ──────────── 03 · SCENES — film strip ─────────────────────────────── */
+  .step-scenes-wrap {
+    background: var(--surface-900);
+    border: 1px solid var(--surface-700);
+    border-radius: 4px;
+    padding: 12px;
+  }
+  .step-scenes-strip {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: 3px;
+    margin-bottom: 8px;
+  }
+  .step-scenes-cell {
+    aspect-ratio: 1 / 1.3;
+    background: var(--surface-800);
+    border: 1px solid var(--surface-700);
+    border-radius: 2px;
+    position: relative;
+    display: grid; place-items: center;
+    animation: sceneFill 4s ease-in-out infinite;
+  }
+  .step-scenes-cell::before {
+    content: "";
+    position: absolute; inset: 2px;
+    background: var(--accent);
+    opacity: 0; border-radius: 1px;
+    animation: scenePulse 4s ease-in-out infinite;
+  }
+  .step-scenes-num {
+    position: relative;
+    font-family: var(--font-mono); font-size: 7px; font-weight: 700;
+    color: var(--surface-500);
+  }
+  @keyframes sceneFill { 0%, 100% { border-color: var(--surface-700); } 50% { border-color: var(--accent); } }
+  @keyframes scenePulse { 0%, 100% { opacity: 0; } 50% { opacity: 0.18; } }
+  .step-scenes-axis {
+    display: flex; justify-content: space-between;
+    font-family: var(--font-mono); font-size: 8px;
+    color: var(--surface-500);
+    border-top: 1px dashed var(--surface-700);
+    padding-top: 6px;
+  }
+  .step-scenes-tick { white-space: nowrap; }
+
+  /* ──────────── 04 · IMAGES — thumb grid + model swap ────────────────── */
+  .step-images-wrap {
+    background: var(--surface-900);
+    border: 1px solid var(--surface-700);
+    border-radius: 4px;
+    padding: 12px;
+  }
+  .step-images-models {
+    display: flex; gap: 4px; margin-bottom: 10px; flex-wrap: wrap;
+  }
+  .step-images-model {
+    font-family: var(--font-mono); font-size: 8px; padding: 3px 7px;
+    background: var(--surface-800); border: 1px solid var(--surface-700);
+    color: var(--surface-400); border-radius: 9999px;
+    white-space: nowrap;
+  }
+  .step-images-model.is-active {
+    background: color-mix(in srgb, var(--accent) 15%, transparent);
+    border-color: var(--accent); color: var(--surface-50);
+  }
+  .step-images-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+  }
+  .step-images-thumb {
+    aspect-ratio: 16 / 10;
+    position: relative;
+    background: var(--surface-800);
+    border: 1px solid var(--surface-700);
+    border-radius: 3px;
+    overflow: hidden;
+    animation: shimmerIn 1.6s ease-out both;
+  }
+  .step-images-art { position: absolute; inset: 0; }
+  .step-images-thumb::after {
+    content: "";
+    position: absolute; inset: 0;
+    background: linear-gradient(110deg, transparent 30%, color-mix(in srgb, var(--brand-500) 14%, transparent) 50%, transparent 70%);
+    background-size: 200% 100%;
+    animation: shimmerSweep 2.4s ease-in-out infinite;
+    pointer-events: none;
+  }
+  .step-images-num {
+    position: absolute; top: 4px; left: 5px;
+    font-family: var(--font-mono); font-size: 7px;
+    color: var(--surface-300);
+    background: rgba(0,0,0,0.4); padding: 1px 4px; border-radius: 2px;
+  }
+  @keyframes shimmerIn {
+    from { opacity: 0; transform: translateY(8px) scale(0.97); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  @keyframes shimmerSweep {
+    from { background-position: 200% 0; }
+    to   { background-position: -100% 0; }
+  }
+
+  /* ──────────── 05 · CAPTIONS — TikTok pop ───────────────────────────── */
+  .step-captions-wrap {
+    background: var(--surface-900);
+    border: 1px solid var(--surface-700);
+    border-radius: 4px;
+    padding: 14px;
+  }
+  .step-captions-stage {
+    position: relative;
+    aspect-ratio: 16 / 6;
+    background:
+      radial-gradient(140% 90% at 50% 100%, var(--surface-800), transparent 60%),
+      linear-gradient(135deg, var(--surface-700), var(--surface-800));
+    border-radius: 3px;
+    overflow: hidden;
+    display: grid;
+    place-items: center;
+  }
+  .step-captions-grid {
+    position: absolute; inset: 0;
+    background-image:
+      linear-gradient(to right, color-mix(in srgb, var(--surface-500) 20%, transparent) 1px, transparent 1px),
+      linear-gradient(to bottom, color-mix(in srgb, var(--surface-500) 20%, transparent) 1px, transparent 1px);
+    background-size: 24px 24px;
+    -webkit-mask-image: radial-gradient(ellipse at center, #000 30%, transparent 80%);
+            mask-image: radial-gradient(ellipse at center, #000 30%, transparent 80%);
+  }
+  .step-captions-line {
+    position: relative; z-index: 1;
+    display: flex; gap: 6px;
+    font-family: var(--font-sans); font-weight: 800;
+    text-transform: uppercase; letter-spacing: 0.04em;
+  }
+  .step-cap-word {
+    padding: 4px 10px; border-radius: 3px;
+    background: var(--surface-900); border: 1px solid var(--surface-700);
+    color: var(--surface-300);
+    font-size: 14px;
+    box-shadow: 0 2px 0 0 rgba(0,0,0,0.4);
+    animation: capCycle 2.4s ease-in-out infinite;
+  }
+  .step-cap-word.is-active {
+    background: var(--accent); color: var(--surface-900);
+    border-color: var(--accent); transform: translateY(-2px) scale(1.05);
+  }
+  @keyframes capCycle {
+    0%, 90%, 100% { transform: translateY(0) scale(1); }
+    20%, 40%      { transform: translateY(-3px) scale(1.06); }
+  }
+  .step-captions-meta {
+    position: absolute; bottom: 6px; left: 8px;
+    font-family: var(--font-mono); font-size: 8px;
+    color: var(--surface-400);
+  }
+
+  /* ──────────── 06 · UPLOAD — YouTube card mockup ────────────────────── */
+  .step-upload-wrap {
+    background: var(--surface-900);
+    border: 1px solid var(--surface-700);
+    border-radius: 4px;
+    padding: 12px;
+    display: flex; gap: 12px; align-items: stretch;
+  }
+  .step-upload-thumb {
+    position: relative;
+    flex-shrink: 0;
+    width: 130px;
+    aspect-ratio: 16 / 9;
+    border-radius: 4px;
+    overflow: hidden;
+    background: var(--surface-800);
+    border: 1px solid var(--surface-700);
+  }
+  .step-upload-thumbart {
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(120% 80% at 70% 30%, color-mix(in srgb, var(--brand-500) 20%, transparent), transparent 60%),
+      linear-gradient(135deg, var(--surface-700), var(--surface-900));
+  }
+  .step-upload-duration {
+    position: absolute; bottom: 4px; right: 4px;
+    background: rgba(0,0,0,0.85);
+    color: var(--surface-50);
+    font-family: var(--font-mono); font-size: 9px; font-weight: 600;
+    padding: 1px 4px; border-radius: 2px;
+  }
+  .step-upload-progress {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    height: 3px;
+    background: var(--surface-700);
+  }
+  .step-upload-bar {
+    height: 100%;
+    background: var(--accent);
+    animation: uploadBar 3s ease-in-out infinite;
+  }
+  @keyframes uploadBar {
+    0%   { width: 12%; }
+    100% { width: 92%; }
+  }
+  .step-upload-meta { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: space-between; gap: 8px; }
+  .step-upload-title {
+    font-family: var(--font-sans); font-size: 12px; font-weight: 600;
+    color: var(--surface-50);
+    line-height: 1.3;
+    margin: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+  }
+  .step-upload-channel {
+    font-family: var(--font-mono); font-size: 9px;
+    color: var(--surface-500);
+    margin: 0;
+  }
+  .step-upload-stats {
+    display: flex; gap: 14px; margin: 0; padding: 0; list-style: none;
+  }
+  .step-upload-stats li {
+    display: flex; flex-direction: column; gap: 1px;
+    font-family: var(--font-mono);
+  }
+  .step-upload-stat {
+    font-size: 13px; font-weight: 700; color: var(--surface-50);
+    font-variant-numeric: tabular-nums;
+  }
+  .step-upload-stats li > span:nth-child(2) {
+    font-size: 8px; color: var(--surface-500); text-transform: uppercase; letter-spacing: 0.06em;
+  }
+
+  /* Pause heavy animations when card not visible to save battery */
+  @media (prefers-reduced-motion: reduce) {
+    .t-cursor, .step-voice-eq > span, .step-scenes-cell, .step-scenes-cell::before,
+    .step-images-thumb, .step-images-thumb::after, .step-cap-word, .step-upload-bar {
+      animation: none !important;
+    }
+  }
+</style>
+
+<script>
+  // ── Timeline driver — same as previous Pipeline ────────────────────────
+  const sections = document.querySelectorAll<HTMLElement>("[data-timeline]");
+  const reduced = globalThis.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  const update = () => {
+    for (const section of sections) {
+      const rect = section.getBoundingClientRect();
+      const winH = globalThis.innerHeight;
+      const sectionH = section.offsetHeight;
+      const start = winH * 0.5;
+      const scrolled = start - rect.top;
+      const range = sectionH - 0.2 * winH;
+      const progress = Math.max(0, Math.min(1, scrolled / range));
+
+      const fill = section.querySelector<HTMLElement>("[data-timeline-progress]");
+      if (fill) fill.style.height = `${progress * 100}%`;
+
+      const steps = section.querySelectorAll<HTMLElement>("[data-timeline-step]");
+      const mid = winH * 0.55;
+      for (const step of steps) {
+        const r = step.getBoundingClientRect();
+        const stepCentre = r.top + r.height * 0.5;
+        if (stepCentre < mid) step.classList.add("is-active");
+        else step.classList.remove("is-active");
+      }
+    }
+  };
+
+  if (sections.length > 0 && !reduced) {
+    if (globalThis.__lenis) globalThis.__lenis.on("scroll", update);
+    else globalThis.addEventListener("scroll", update, { passive: true });
+    globalThis.addEventListener("resize", update);
+    update();
+  } else if (sections.length > 0) {
+    for (const section of sections) {
+      const fill = section.querySelector<HTMLElement>("[data-timeline-progress]");
+      if (fill) fill.style.height = "100%";
+      section.querySelectorAll("[data-timeline-step]").forEach((s) => s.classList.add("is-active"));
+    }
+  }
+</script>

@@ -1,0 +1,114 @@
+---
+// ── How it works ────────────────────────────────────────────────────────────
+// Sticky horizontal scroll. The section is 300vh tall. Inside it, a sticky
+// 100vh viewport "pins" while the user scrolls — and the inner panel track
+// translates horizontally based on scroll progress. Same pattern Apple
+// uses on the M-series Mac product pages.
+//
+// Pure CSS layout + a tiny scroll-progress driver in the script. Each
+// panel is an entire viewport-wide story with its own micro-illustration.
+
+const STEPS = [
+  {
+    n: "01",
+    cmd: "$ ./tubelane init",
+    title: "Drop a topic.",
+    desc: "One sentence. One paragraph. A pasted link to an article. Whatever you have, that's enough — Tubelane plans the script, voice cast, pacing, and visual style automatically.",
+    accent: "Topic",
+  },
+  {
+    n: "02",
+    cmd: "$ ./review",
+    title: "Steer where it matters.",
+    desc: "Edit any line, swap any voice, regenerate any scene. Multi-step undo if you change your mind. The AI handles the boring 80% — you keep the creative decisions.",
+    accent: "Refine",
+  },
+  {
+    n: "03",
+    cmd: "$ ./ship",
+    title: "One click. End to end.",
+    desc: "Final render, captioned, with title + description + tags + thumbnail. Pushed straight to YouTube via the same OAuth you signed in with. Or schedule it for next Tuesday at 9 AM.",
+    accent: "Ship",
+  },
+];
+---
+
+<section
+  id="how-it-works"
+  class="border-t border-surface-700 relative"
+  data-horizontal-scroll
+  style="height: 320vh;"
+>
+  <div class="sticky top-0 h-screen overflow-hidden flex flex-col">
+    {/* Section header — pinned at top */}
+    <div class="reveal max-w-6xl mx-auto w-full px-4 sm:px-6 pt-10 sm:pt-16 mb-6 sm:mb-10">
+      <p class="text-xs font-mono text-accent mb-3 tracking-wider">$ how_it_works</p>
+      <h2 class="text-3xl sm:text-4xl font-semibold tracking-tight text-surface-50 max-w-2xl">
+        From idea to uploaded — in under 15 minutes.
+      </h2>
+    </div>
+
+    {/* Horizontal track — JS sets transform: translateX based on scroll */}
+    <div class="flex-1 relative">
+      <div
+        class="absolute inset-y-0 left-0 flex items-stretch will-change-transform"
+        data-track
+        style="width: 300%;"
+      >
+        {STEPS.map((s, i) => (
+          <div class="w-screen shrink-0 flex items-center px-4 sm:px-10">
+            <div class="max-w-6xl mx-auto w-full grid lg:grid-cols-[1.1fr_1fr] gap-8 sm:gap-14 items-center">
+              {/* Left — copy */}
+              <div>
+                <div class="flex items-baseline gap-4 mb-6">
+                  <span class="text-[80px] sm:text-[140px] font-mono font-bold leading-none text-surface-700 select-none">{s.n}</span>
+                  <span class="text-xs font-mono text-accent tracking-wider whitespace-nowrap">{s.cmd}</span>
+                </div>
+                <h3 class="text-3xl sm:text-5xl font-semibold tracking-tight text-surface-50 leading-tight mb-5">
+                  {s.title}
+                </h3>
+                <p class="text-base sm:text-lg text-surface-300 leading-relaxed max-w-xl">
+                  {s.desc}
+                </p>
+              </div>
+
+              {/* Right — big visual */}
+              <div class="relative aspect-square max-w-md mx-auto w-full">
+                <div class="absolute inset-0 grid place-items-center">
+                  <div class="absolute w-full h-full border border-surface-700 rounded-full"></div>
+                  <div class="absolute w-3/4 h-3/4 border border-surface-700 rounded-full" style={`animation: spin ${30 + i * 6}s linear infinite reverse;`}></div>
+                  <div class="absolute w-1/2 h-1/2 border border-accent/40 rounded-full" style={`animation: spin ${22 + i * 4}s linear infinite;`}></div>
+                  <div class="relative bg-surface-900 border border-accent/60 rounded-full w-28 h-28 sm:w-36 sm:h-36 grid place-items-center">
+                    <span class="text-xs font-mono text-accent tracking-widest uppercase">{s.accent}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+
+    {/* Progress dots */}
+    <div class="absolute bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-2">
+      {STEPS.map((_, i) => (
+        <span
+          class="w-8 h-px bg-surface-600 transition-colors"
+          data-progress-dot={i}
+        ></span>
+      ))}
+    </div>
+  </div>
+</section>
+
+<style>
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    [data-horizontal-scroll] { height: auto !important; }
+    [data-horizontal-scroll] .sticky { position: static !important; height: auto !important; }
+    [data-track] { width: 100% !important; flex-direction: column; transform: none !important; }
+    [data-track] > div { width: 100% !important; padding: 4rem 1.5rem; }
+  }
+</style>

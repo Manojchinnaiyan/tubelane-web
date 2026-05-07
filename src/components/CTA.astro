@@ -1,0 +1,51 @@
+---
+// ── CTA ─────────────────────────────────────────────────────────────────────
+// Last-chance email-grab + DM CTA. Styled like a terminal box. Form posts
+// to a placeholder endpoint — wire to ConvertKit / Beehiiv / Resend on
+// deploy.
+---
+
+<section id="beta" class="border-t border-surface-700 relative overflow-hidden" data-spotlight>
+  <div class="absolute inset-0 bg-grid pointer-events-none opacity-50" aria-hidden="true"></div>
+  <div class="absolute inset-0 spotlight opacity-60" aria-hidden="true"></div>
+  <div class="relative max-w-3xl mx-auto px-4 sm:px-6 py-20 sm:py-28 text-center">
+    <p class="reveal text-xs font-mono text-accent mb-4 tracking-wider">
+      $ beta_access --priority
+    </p>
+    <h2 class="reveal text-3xl sm:text-5xl font-semibold tracking-tight text-surface-50 mb-5 leading-tight">
+      <span class="count-up text-accent" data-count-to="30">0</span> creators get the build this month.
+    </h2>
+    <p class="reveal text-surface-300 max-w-xl mx-auto mb-9 leading-relaxed">
+      Drop your email — we'll send the macOS .dmg, a 5-minute setup guide,
+      and onboarding directly. No spam, no list-selling, no marketing-ops
+      automation.
+    </p>
+
+    <form
+      class="reveal flex flex-col sm:flex-row items-stretch gap-2 max-w-lg mx-auto"
+      action="https://formspree.io/f/REPLACE_ME"
+      method="POST"
+    >
+      <label class="sr-only" for="email">Email</label>
+      <input
+        id="email"
+        name="email"
+        type="email"
+        required
+        autocomplete="email"
+        placeholder="you@channel.com"
+        class="flex-1 bg-surface-700 border border-surface-600 px-4 py-3 text-sm font-mono text-surface-50 placeholder:text-surface-500 focus:outline-none focus:border-accent"
+      />
+      <button
+        type="submit"
+        class="px-5 py-3 bg-brand-500 text-surface-900 text-sm font-mono font-semibold hover:bg-brand-400 transition-colors"
+      >
+        [request_access]
+      </button>
+    </form>
+
+    <p class="reveal mt-6 text-[10px] font-mono text-surface-500">
+      or DM <a href="https://twitter.com/intent/tweet?text=Tubelane" class="text-surface-300 hover:text-accent underline underline-offset-2">@tubelane</a> on X with the word "Tubelane"
+    </p>
+  </div>
+</section>

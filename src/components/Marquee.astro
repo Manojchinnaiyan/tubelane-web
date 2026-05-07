@@ -1,0 +1,41 @@
+---
+// ── Marquee ─────────────────────────────────────────────────────────────────
+// Auto-scrolling band of model names. Pure CSS animation, pauses on hover.
+// Sits between sections as a "live" element to break up the static feel.
+
+const MODELS = [
+  "Claude Opus 4",
+  "Claude Sonnet 4.6",
+  "Claude Haiku 4.5",
+  "Gemini 3 Pro Image",
+  "Gemini 3.1 Flash",
+  "Gemini 2.5 Flash",
+  "Imagen 4 Ultra",
+  "Imagen 4 Standard",
+  "Imagen 4 Fast",
+  "OpenAI gpt-image-1",
+  "OpenAI DALL·E 3",
+  "OpenAI Whisper",
+  "Google Cloud TTS",
+  "ElevenLabs",
+  "Chatterbox neural",
+];
+// Duplicate the list so the CSS translateX(-50%) loop is seamless.
+const TRACK = [...MODELS, ...MODELS];
+---
+
+<section class="border-y border-surface-700 bg-surface-800/30 py-6">
+  <div class="marquee max-w-7xl mx-auto">
+    <div class="marquee-track shrink-0">
+      {TRACK.map((m, i) => (
+        <div class="flex items-center gap-3 shrink-0 px-2">
+          <span class="text-xs font-mono text-surface-500 select-none">·</span>
+          <span class="text-xs font-mono text-surface-300 whitespace-nowrap">{m}</span>
+          {i === MODELS.length - 1 && (
+            <span class="text-xs font-mono text-accent select-none ml-3">↻</span>
+          )}
+        </div>
+      ))}
+    </div>
+  </div>
+</section>

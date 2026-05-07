@@ -1,0 +1,51 @@
+---
+// ── Top nav ─────────────────────────────────────────────────────────────────
+// Sticky top bar mirroring the app's terminal-header look. Logo (terminal
+// icon + brand name) on the left; section anchors on the right. Mobile
+// collapses anchors into a single "menu" affordance via the details/summary
+// trick (zero-JS dropdown).
+---
+
+<header class="sticky top-0 z-50 bg-surface-900/85 backdrop-blur border-b border-surface-700">
+  <nav class="max-w-6xl mx-auto flex items-center justify-between px-4 sm:px-6 h-14">
+    <a href="/" class="flex items-center gap-2.5 group" aria-label="Tubelane home">
+      <span class="flex items-center justify-center w-7 h-7 border border-surface-500 group-hover:border-accent transition-colors">
+        <svg width="13" height="13" viewBox="0 0 13 13" aria-hidden="true">
+          <path d="M2 2h9v9H2z" fill="none" stroke="currentColor" stroke-width="1.4" />
+          <path d="M5 4l4 2.5L5 9z" fill="currentColor" />
+        </svg>
+      </span>
+      <span class="font-semibold text-sm tracking-wide text-surface-50">Tubelane</span>
+      <span class="hidden sm:inline text-xs font-mono text-surface-500">/ youtube on autopilot</span>
+    </a>
+
+    <ul class="hidden md:flex items-center gap-7 text-xs font-mono text-surface-300">
+      <li><a href="#pipeline" class="hover:text-surface-50 transition-colors">pipeline</a></li>
+      <li><a href="#models" class="hover:text-surface-50 transition-colors">models</a></li>
+      <li><a href="#how-it-works" class="hover:text-surface-50 transition-colors">how_it_works</a></li>
+      <li><a href="#faq" class="hover:text-surface-50 transition-colors">faq</a></li>
+      <li>
+        <a
+          href="#beta"
+          class="px-3 py-1.5 bg-brand-500 text-surface-900 font-semibold hover:bg-brand-400 transition-colors"
+        >
+          [join_beta]
+        </a>
+      </li>
+    </ul>
+
+    {/* Mobile — pure CSS dropdown via <details> */}
+    <details class="md:hidden relative">
+      <summary class="list-none cursor-pointer text-xs font-mono text-surface-300 px-2 py-1 border border-surface-600 hover:border-surface-400">
+        menu
+      </summary>
+      <ul class="absolute right-0 top-full mt-1 w-44 bg-surface-800 border border-surface-600 text-xs font-mono shadow-2xl">
+        <li><a href="#pipeline" class="block px-3 py-2 text-surface-300 hover:bg-surface-700 hover:text-surface-50">pipeline</a></li>
+        <li><a href="#models" class="block px-3 py-2 text-surface-300 hover:bg-surface-700 hover:text-surface-50">models</a></li>
+        <li><a href="#how-it-works" class="block px-3 py-2 text-surface-300 hover:bg-surface-700 hover:text-surface-50">how_it_works</a></li>
+        <li><a href="#faq" class="block px-3 py-2 text-surface-300 hover:bg-surface-700 hover:text-surface-50">faq</a></li>
+        <li><a href="#beta" class="block px-3 py-2 bg-brand-500 text-surface-900 font-semibold">[join_beta]</a></li>
+      </ul>
+    </details>
+  </nav>
+</header>

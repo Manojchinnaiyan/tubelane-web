@@ -1,0 +1,41 @@
+---
+import Base from "@/layouts/Base.astro";
+import Nav from "@/components/Nav.astro";
+import Hero from "@/components/Hero.astro";
+import Pipeline from "@/components/Pipeline.astro";
+import Stats from "@/components/Stats.astro";
+import Marquee from "@/components/Marquee.astro";
+import Models from "@/components/Models.astro";
+import HowItWorks from "@/components/HowItWorks.astro";
+import Manifesto from "@/components/Manifesto.astro";
+import FAQ from "@/components/FAQ.astro";
+import CTA from "@/components/CTA.astro";
+import Footer from "@/components/Footer.astro";
+---
+
+<Base
+  title="Tubelane — Multi-model GenAI orchestration for YouTube creators"
+  description="Native desktop app that orchestrates Claude, Gemini, Imagen, OpenAI and Whisper into one end-to-end YouTube pipeline. Topic in, captioned video out — your API keys, no SaaS lock-in."
+  canonicalPath="/"
+>
+  <Nav />
+  <main>
+    <Hero />
+    <Manifesto
+      quote="Most creator tools ship one AI feature. Tubelane stitches the entire pipeline."
+      attribution="What we built and why"
+    />
+    <Pipeline />
+    <Stats />
+    <Marquee />
+    <Manifesto
+      quote="The value isn't any single model. It's the orchestration layer that makes them act like one."
+      align="center"
+    />
+    <Models />
+    <HowItWorks />
+    <FAQ />
+    <CTA />
+  </main>
+  <Footer />
+</Base>

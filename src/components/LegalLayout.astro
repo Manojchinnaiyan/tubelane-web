@@ -1,0 +1,46 @@
+---
+// ── Legal page wrapper ──────────────────────────────────────────────────────
+// Shared chrome for /privacy and /terms. Same nav + footer as the marketing
+// site, but the body is constrained to a comfortable reading column with
+// big typography, and we render a simple TOC sidebar from the H2s on
+// desktop.
+
+import Nav from "@/components/Nav.astro";
+import Footer from "@/components/Footer.astro";
+
+interface Props {
+  title: string;
+  updatedAt: string; // human-readable, e.g. "May 7, 2026"
+}
+
+const { title, updatedAt } = Astro.props;
+---
+
+<Nav />
+<main class="border-t border-surface-700">
+  <div class="max-w-3xl mx-auto px-4 sm:px-6 py-16 sm:py-20">
+    <header class="mb-12">
+      <p class="text-xs font-mono text-accent mb-3 tracking-wider">$ legal</p>
+      <h1 class="text-3xl sm:text-4xl font-semibold tracking-tight text-surface-50 mb-3">{title}</h1>
+      <p class="text-xs font-mono text-surface-500">last updated · {updatedAt}</p>
+    </header>
+
+    <article
+      class="prose prose-invert max-w-none
+             text-surface-200 leading-relaxed
+             [&_h2]:text-2xl [&_h2]:font-semibold [&_h2]:text-surface-50 [&_h2]:mt-12 [&_h2]:mb-4 [&_h2]:tracking-tight
+             [&_h2]:before:content-['$'] [&_h2]:before:text-accent [&_h2]:before:font-mono [&_h2]:before:mr-2
+             [&_h3]:text-base [&_h3]:font-semibold [&_h3]:text-surface-100 [&_h3]:mt-8 [&_h3]:mb-2
+             [&_p]:mb-4 [&_p]:text-surface-300
+             [&_ul]:list-disc [&_ul]:pl-6 [&_ul]:mb-4 [&_ul]:text-surface-300 [&_ul]:space-y-1.5
+             [&_li]:leading-relaxed
+             [&_a]:text-accent [&_a]:link-underline
+             [&_strong]:text-surface-50 [&_strong]:font-semibold
+             [&_code]:font-mono [&_code]:text-[0.9em] [&_code]:bg-surface-800 [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:rounded [&_code]:text-surface-100
+             [&_hr]:border-surface-700 [&_hr]:my-8"
+    >
+      <slot />
+    </article>
+  </div>
+</main>
+<Footer />

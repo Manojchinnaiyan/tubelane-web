@@ -1,0 +1,116 @@
+---
+// ── Base layout ───────────────────────────────────────────────────────────
+// Shared chrome for every page: <head> with full SEO meta + OpenGraph +
+// Twitter card + JSON-LD structured data, the global stylesheet, and the
+// scroll-reveal init script. Body content rendered via the default slot.
+//
+// Pages override `title` and `description` per-page; everything else falls
+// back to sensible defaults for the marketing site.
+
+import "@/styles/globals.css";
+
+interface Props {
+  title?: string;
+  description?: string;
+  ogImage?: string;
+  canonicalPath?: string;
+}
+
+const {
+  title = "Tubelane — Multi-model GenAI orchestration for YouTube",
+  description = "Tubelane is a native desktop app that orchestrates Claude, Gemini, Imagen, OpenAI and Whisper into one end-to-end YouTube content pipeline. Topic in, captioned video out — on-device, your API keys, no SaaS lock-in.",
+  ogImage = "/og.png",
+  canonicalPath,
+} = Astro.props;
+
+const SITE_ORIGIN = "https://tubelane.in";
+const canonical = canonicalPath
+  ? `${SITE_ORIGIN}${canonicalPath}`
+  : new URL(Astro.url.pathname, SITE_ORIGIN).toString();
+const ogImageUrl = new URL(ogImage, SITE_ORIGIN).toString();
+
+// JSON-LD structured data so Google understands what Tubelane is. Two
+// objects: SoftwareApplication for the product, Organization for the
+// brand/site. Extending later (FAQ, Article, etc.) is just adding more
+// objects to the @graph.
+const structuredData = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "SoftwareApplication",
+      name: "Tubelane",
+      applicationCategory: "MultimediaApplication",
+      operatingSystem: "macOS, Windows, Linux",
+      description,
+      url: SITE_ORIGIN,
+      offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
+    },
+    {
+      "@type": "Organization",
+      name: "Tubelane",
+      url: SITE_ORIGIN,
+      logo: `${SITE_ORIGIN}/logo.png`,
+    },
+  ],
+};
+---
+
+<!doctype html>
+<html lang="en" class="bg-surface-900">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="generator" content={Astro.generator} />
+    <link rel="canonical" href={canonical} />
+
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <meta name="theme-color" content="#000000" />
+
+    {/* Open Graph */}
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={ogImageUrl} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:site_name" content="Tubelane" />
+
+    {/* Twitter */}
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogImageUrl} />
+
+    {/* Icons */}
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+
+    {/* Fonts — preconnect saves ~80ms on the critical path */}
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap"
+    />
+
+    {/* Structured data — JSON-LD lives in head per Google guidelines.
+        is:inline tells Astro not to process this — it must render
+        verbatim for crawlers to read it. */}
+    <script type="application/ld+json" is:inline set:html={JSON.stringify(structuredData)} />
+  </head>
+  <body class="min-h-screen flex flex-col">
+    <slot />
+    {/* Scroll reveal + hero typing + smooth scroll + cursor */}
+    <script>
+      import "@/scripts/scroll-reveal.ts";
+    </script>
+    {/* Hero particle network — separate module, only mounts when a
+        [data-particles] canvas is on the page */}
+    <script>
+      import "@/scripts/particles.ts";
+    </script>
+  </body>
+</html>

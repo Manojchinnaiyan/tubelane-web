@@ -1,0 +1,245 @@
+---
+// ── Hero ────────────────────────────────────────────────────────────────────
+// Two-layer hero:
+//   Background: <canvas> particle network — connected cyan dots that
+//     drift slowly and respond to the cursor (mouse repels them).
+//   Foreground left: bold copy + dual CTAs.
+//   Foreground right: 3D rotating "constellation" of model badges — pure
+//     CSS transform-style: preserve-3d, no Three.js. Each badge is
+//     positioned in 3D space; the parent rotates slowly. Counter-rotates
+//     each badge so labels stay readable.
+//
+// The terminal-typed line is now BELOW the headline as a "live" status
+// strip rather than the main visual focal point.
+
+const TYPED = [
+  "$ tubelane init && ./run --topic='why interest rates matter'",
+  "✓ script        · 0:11s",
+  "✓ voice cast    · 0:48s",
+  "✓ scene plan    · 0:14s",
+  "✓ images (12)   · 1:42s",
+  "✓ captions      · 0:09s",
+  "✓ render + push · 0:31s",
+  "$ shipped · total 3m 35s",
+].join("|");
+
+// Constellation badges — rendered around a sphere via translateZ + rotateY.
+// First half rotates one direction; the second half (above/below) keeps
+// the cluster from looking 2D.
+const NODES = [
+  { name: "Claude Opus",      ring: "lang"  },
+  { name: "Claude Sonnet",    ring: "lang"  },
+  { name: "Claude Haiku",     ring: "lang"  },
+  { name: "Gemini 3 Pro",     ring: "vis"   },
+  { name: "Imagen 4 Ultra",   ring: "vis"   },
+  { name: "Imagen 4 Fast",    ring: "vis"   },
+  { name: "DALL·E 3",         ring: "vis"   },
+  { name: "gpt-image-1",      ring: "vis"   },
+  { name: "ElevenLabs",       ring: "audio" },
+  { name: "Google TTS",       ring: "audio" },
+  { name: "Chatterbox",       ring: "audio" },
+  { name: "Whisper",          ring: "audio" },
+];
+// All rings use the same monochrome accent — opacity differs slightly
+// per ring so the three groups still read as distinct without stepping
+// outside the black/white palette of the desktop app.
+const RING_COLORS: Record<string, string> = {
+  lang:  "var(--brand-500)",
+  vis:   "var(--surface-200)",
+  audio: "var(--surface-300)",
+};
+---
+
+<section class="relative overflow-hidden min-h-[680px] sm:min-h-[760px] lg:min-h-[820px] flex items-center" data-spotlight>
+  {/* Background layers */}
+  <canvas
+    class="absolute inset-0 w-full h-full pointer-events-auto"
+    data-particles
+    aria-hidden="true"
+  ></canvas>
+  <div class="absolute inset-0 bg-grid pointer-events-none opacity-50" aria-hidden="true"></div>
+  <div class="absolute inset-0 spotlight" aria-hidden="true"></div>
+  <div class="orb orb-a w-72 h-72 -top-20 -left-20" data-parallax="-0.18" aria-hidden="true"></div>
+  <div class="orb orb-b w-96 h-96 -bottom-32 -right-24" data-parallax="0.12" aria-hidden="true"></div>
+
+  <div class="relative w-full max-w-7xl mx-auto px-4 sm:px-6 py-16 sm:py-20">
+    <div class="grid lg:grid-cols-[1.05fr_1fr] gap-10 lg:gap-16 items-center">
+
+      {/* ── Left — copy ────────────────────────────────────────────── */}
+      <div>
+        <p class="reveal inline-flex items-center gap-2 text-[11px] font-mono text-accent mb-6 px-3 py-1 border border-accent/40 rounded-full">
+          <span class="w-1.5 h-1.5 rounded-full bg-accent animate-pulse"></span>
+          multi-model genai · private beta · v0.1
+        </p>
+        <h1 class="reveal text-[44px] sm:text-6xl lg:text-7xl font-semibold tracking-tight leading-[1.02] text-surface-50 mb-6">
+          YouTube videos<br/>
+          <span class="text-accent">on autopilot.</span>
+        </h1>
+        <p class="reveal text-lg sm:text-xl text-surface-300 mb-8 max-w-xl leading-relaxed">
+          A native desktop app that orchestrates Claude, Gemini, Imagen,
+          OpenAI and Whisper into one end-to-end pipeline. Topic in,
+          captioned video out.
+        </p>
+
+        <div class="reveal flex flex-wrap items-center gap-3 mb-10">
+          <a
+            href="#beta"
+            class="group inline-flex items-center gap-2 px-6 py-3 bg-brand-500 text-surface-900 text-sm font-mono font-semibold hover:bg-brand-400 transition-all hover:-translate-y-0.5"
+          >
+            [join_private_beta]
+            <span class="inline-block transition-transform group-hover:translate-x-1">→</span>
+          </a>
+          <a
+            href="#pipeline"
+            class="inline-flex items-center gap-2 px-6 py-3 border border-surface-600 text-surface-200 text-sm font-mono hover:bg-surface-700 hover:border-surface-500 transition-colors"
+          >
+            see_the_pipeline
+          </a>
+        </div>
+
+        {/* Live "ship log" — terminal typed-on, replaces the boring "feature ticks" row */}
+        <div class="reveal relative max-w-xl">
+          <div class="absolute -inset-2 bg-accent/5 blur-xl pointer-events-none"></div>
+          <div class="relative bg-surface-900/70 backdrop-blur border border-surface-700 rounded">
+            <div class="flex items-center gap-2 px-3 py-1.5 border-b border-surface-700">
+              <span class="w-2 h-2 rounded-full bg-red-500/60"></span>
+              <span class="w-2 h-2 rounded-full bg-yellow-500/60"></span>
+              <span class="w-2 h-2 rounded-full bg-green-500/60"></span>
+              <span class="ml-1 text-[10px] font-mono text-surface-500">tubelane · last shipped · live</span>
+            </div>
+            <pre
+              class="p-3 sm:p-4 text-[10px] sm:text-[11px] leading-relaxed font-mono text-surface-200 whitespace-pre min-h-[170px] cursor"
+              data-typed={TYPED}>{/* filled by particles + scroll-reveal */}</pre>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Right — 3D rotating constellation ──────────────────────── */}
+      <div class="reveal relative aspect-square max-w-[520px] mx-auto w-full hidden md:block">
+        <div class="absolute -inset-12 glow opacity-60" aria-hidden="true"></div>
+
+        <div class="constellation">
+          <div class="constellation-spin">
+            {NODES.map((node, i) => {
+              // Distribute around a sphere — half on the back ring, half on
+              // the front. We compute lat (vertical tilt) and lon (rotation
+              // around vertical axis) from index. tx pushes the badge out
+              // along Z so it sits on the sphere's surface.
+              const total = NODES.length;
+              const phi = Math.acos(1 - (2 * (i + 0.5)) / total); // 0..π
+              const theta = Math.PI * (1 + Math.sqrt(5)) * i;       // golden angle
+              const r = 220;
+              const x = r * Math.sin(phi) * Math.cos(theta);
+              const y = r * Math.sin(phi) * Math.sin(theta);
+              const z = r * Math.cos(phi);
+              return (
+                <div
+                  class="constellation-node"
+                  style={`
+                    transform: translate3d(${x}px, ${y}px, ${z}px);
+                    --ring-color: ${RING_COLORS[node.ring]};
+                  `}
+                >
+                  <span class="constellation-badge" style={`--ring-color: ${RING_COLORS[node.ring]};`}>
+                    {node.name}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Centre core */}
+          <div class="constellation-core">
+            <div class="constellation-core-disc">
+              <span class="text-[10px] font-mono text-accent tracking-widest uppercase">tubelane</span>
+              <span class="text-[8px] font-mono text-surface-500 mt-0.5">orchestrator</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  /* ── 3D constellation ─────────────────────────────────────────────────
+     Pure CSS 3D — preserve-3d on the spinner so child translate3d stacks
+     correctly. The whole spinner rotates around the Y axis at 50s/rev.
+     Each badge counter-rotates so the text always faces forward. */
+  .constellation {
+    position: absolute;
+    inset: 0;
+    perspective: 1100px;
+    perspective-origin: 50% 50%;
+  }
+  .constellation-spin {
+    position: absolute;
+    inset: 0;
+    transform-style: preserve-3d;
+    animation: constellationSpin 50s linear infinite;
+    will-change: transform;
+  }
+  @keyframes constellationSpin {
+    from { transform: rotateY(0deg) rotateX(-12deg); }
+    to   { transform: rotateY(360deg) rotateX(-12deg); }
+  }
+
+  .constellation-node {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform-style: preserve-3d;
+    /* Each node's transform is set inline — this just centres the origin */
+    margin: -1px 0 0 -1px;
+  }
+
+  /* Badge itself — counter-rotate the spin parent so the label always
+     reads horizontally regardless of where it is on the sphere. */
+  .constellation-badge {
+    display: inline-block;
+    transform: translate(-50%, -50%);
+    background: var(--surface-800);
+    border: 1px solid color-mix(in srgb, var(--ring-color, var(--accent)) 50%, transparent);
+    border-radius: 9999px;
+    padding: 5px 11px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--surface-100);
+    white-space: nowrap;
+    box-shadow:
+      0 0 16px color-mix(in srgb, var(--ring-color, var(--accent)) 25%, transparent);
+    backface-visibility: visible;
+  }
+
+  /* Centre core — sits flat (not rotated) at the centre */
+  .constellation-core {
+    position: absolute;
+    top: 50%; left: 50%;
+    width: 110px; height: 110px;
+    transform: translate(-50%, -50%);
+    z-index: 5;
+    pointer-events: none;
+  }
+  .constellation-core-disc {
+    width: 100%;
+    height: 100%;
+    border-radius: 9999px;
+    background: radial-gradient(circle, var(--surface-800), var(--surface-900));
+    border: 1px solid color-mix(in srgb, var(--accent) 60%, transparent);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    box-shadow:
+      0 0 0 6px color-mix(in srgb, var(--accent) 8%, transparent),
+      0 0 60px color-mix(in srgb, var(--accent) 30%, transparent);
+  }
+
+  /* Pause spin on hover so users can read badges */
+  .constellation:hover .constellation-spin {
+    animation-play-state: paused;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .constellation-spin { animation: none; }
+  }
+</style>

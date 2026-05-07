@@ -1,0 +1,16 @@
+---
+// ── Footer ──────────────────────────────────────────────────────────────────
+const year = new Date().getFullYear();
+---
+
+<footer class="border-t border-surface-700 mt-auto">
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 py-10 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-mono text-surface-500">
+    <p>© {year} Tubelane · built with multi-model GenAI</p>
+    <div class="flex items-center gap-6">
+      <a href="/privacy" class="hover:text-surface-200 transition-colors">privacy</a>
+      <a href="/terms" class="hover:text-surface-200 transition-colors">terms</a>
+      <a href="https://twitter.com/tubelane" class="hover:text-surface-200 transition-colors">x.com</a>
+      <a href="https://github.com/tubelane" class="hover:text-surface-200 transition-colors">github</a>
+    </div>
+  </div>
+</footer>

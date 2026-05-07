@@ -1,0 +1,290 @@
+---
+// ── Models — Orbital rings ──────────────────────────────────────────────────
+// Three concentric rings rotating at different speeds, with model badges
+// pinned to each ring. Replaces the boring 3-column list with a
+// "solar system" layout — Tubelane logo at the centre, models orbit
+// around it. Pure CSS rotation; counter-rotation on each badge keeps
+// labels readable.
+//
+// On small screens, the orbits collapse to a static stacked list (no
+// horizontal overflow on phones). All animation respects
+// prefers-reduced-motion.
+
+type Model = { name: string; tag: string };
+
+// Inner ring — language models. Smallest radius, fastest spin.
+const INNER: Model[] = [
+  { name: "Claude Opus", tag: "L" },
+  { name: "Claude Sonnet", tag: "L" },
+  { name: "Claude Haiku", tag: "L" },
+];
+
+// Middle ring — audio. Medium radius, medium speed (counter-rotates for
+// visual interest).
+const MIDDLE: Model[] = [
+  { name: "Google TTS", tag: "A" },
+  { name: "ElevenLabs", tag: "A" },
+  { name: "Chatterbox", tag: "A" },
+  { name: "Whisper", tag: "A" },
+];
+
+// Outer ring — vision. Largest radius, slowest spin.
+const OUTER: Model[] = [
+  { name: "Gemini 3 Pro", tag: "V" },
+  { name: "Gemini 3.1 Flash", tag: "V" },
+  { name: "Gemini 2.5 Flash", tag: "V" },
+  { name: "Imagen 4 Ultra", tag: "V" },
+  { name: "Imagen 4", tag: "V" },
+  { name: "Imagen 4 Fast", tag: "V" },
+  { name: "gpt-image-1", tag: "V" },
+  { name: "DALL·E 3", tag: "V" },
+];
+
+// Helper: position N items evenly around a circle. Returns angle in deg
+// for the i-th item (offset by `phase` so adjacent rings are staggered).
+const angleAt = (i: number, total: number, phase = 0) =>
+  phase + (360 / total) * i;
+---
+
+<section id="models" class="border-t border-surface-700 bg-surface-800/30 relative overflow-hidden">
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 py-20 sm:py-32">
+    <div class="reveal max-w-2xl mb-12 sm:mb-16 mx-auto text-center">
+      <p class="text-xs font-mono text-accent mb-3 tracking-wider">$ models</p>
+      <h2 class="text-3xl sm:text-5xl font-semibold tracking-tight text-surface-50 mb-4 leading-tight">
+        The orchestration stack.<br/>
+        <span class="text-surface-400">Mix and match per stage.</span>
+      </h2>
+      <p class="text-surface-300 leading-relaxed">
+        Use the cheapest model that gets the job done; bring in the premium
+        tier when it matters. All providers, all your keys, never locked
+        into one.
+      </p>
+    </div>
+
+    {/* Orbital diagram — desktop only. Mobile gets a stacked list below. */}
+    <div class="reveal hidden md:block">
+      <div class="orbital-stage relative mx-auto" aria-hidden="true">
+        {/* Ring rails — pure decorative dotted circles */}
+        <div class="orbit orbit-rail orbit-outer"></div>
+        <div class="orbit orbit-rail orbit-middle"></div>
+        <div class="orbit orbit-rail orbit-inner"></div>
+
+        {/* Outer ring — vision (slowest, clockwise) */}
+        <div class="orbit orbit-outer orbit-spin spin-90s">
+          {OUTER.map((m, i) => (
+            <div class="orbit-item" style={`--a: ${angleAt(i, OUTER.length)}deg;`}>
+              <span class="orbit-counter spin-90s-rev">
+                <span class="orbit-tag">[{m.tag}]</span>
+                {m.name}
+              </span>
+            </div>
+          ))}
+        </div>
+
+        {/* Middle ring — audio (medium, counter-clockwise) */}
+        <div class="orbit orbit-middle orbit-spin spin-60s-rev">
+          {MIDDLE.map((m, i) => (
+            <div class="orbit-item" style={`--a: ${angleAt(i, MIDDLE.length, 22.5)}deg;`}>
+              <span class="orbit-counter spin-60s">
+                <span class="orbit-tag">[{m.tag}]</span>
+                {m.name}
+              </span>
+            </div>
+          ))}
+        </div>
+
+        {/* Inner ring — language (fastest, clockwise) */}
+        <div class="orbit orbit-inner orbit-spin spin-40s">
+          {INNER.map((m, i) => (
+            <div class="orbit-item" style={`--a: ${angleAt(i, INNER.length, 30)}deg;`}>
+              <span class="orbit-counter spin-40s-rev">
+                <span class="orbit-tag">[{m.tag}]</span>
+                {m.name}
+              </span>
+            </div>
+          ))}
+        </div>
+
+        {/* Centre node — Tubelane wordmark */}
+        <div class="orbit-core">
+          <div class="orbit-core-glow"></div>
+          <div class="orbit-core-disc">
+            <span class="text-[10px] font-mono text-accent tracking-widest uppercase">tubelane</span>
+            <span class="text-[8px] font-mono text-surface-500 mt-1">orchestrator</span>
+          </div>
+        </div>
+
+        {/* Ring legend — bottom corner */}
+        <div class="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-5 text-[10px] font-mono text-surface-500">
+          {/* Monochrome legend dots — three different opacities of the
+              brand white instead of three different hues. Reads as
+              "three groups" without breaking the strict palette. */}
+          <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-surface-50"></span> [L] language</span>
+          <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-surface-200"></span> [A] audio</span>
+          <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-surface-400"></span> [V] vision</span>
+        </div>
+      </div>
+    </div>
+
+    {/* Mobile fallback — stacked list */}
+    <div class="md:hidden grid gap-3">
+      {[
+        { title: "Language", rows: INNER },
+        { title: "Audio",    rows: MIDDLE },
+        { title: "Vision",   rows: OUTER },
+      ].map((col) => (
+        <div class="reveal bg-surface-900 border border-surface-700 p-5">
+          <p class="text-[10px] font-mono text-accent mb-3 uppercase tracking-widest">$ {col.title}</p>
+          <ul class="grid grid-cols-2 gap-x-4 gap-y-2">
+            {col.rows.map((r) => (
+              <li class="text-xs font-mono text-surface-200 truncate">· {r.name}</li>
+            ))}
+          </ul>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>
+
+<style>
+  /* Stage takes a fixed aspect — 1:1 — so circular orbits actually look
+     circular regardless of viewport width. Capped at 720px for desktop
+     so the rings don't get absurdly large on big screens. */
+  .orbital-stage {
+    width: 100%;
+    max-width: 720px;
+    aspect-ratio: 1 / 1;
+  }
+
+  /* Each orbit is an absolutely-positioned square centred on the stage.
+     Inner = 36% of stage, middle = 64%, outer = 96%. */
+  .orbit {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    border-radius: 9999px;
+  }
+  .orbit-outer  { width: 96%; height: 96%; }
+  .orbit-middle { width: 68%; height: 68%; }
+  .orbit-inner  { width: 38%; height: 38%; }
+
+  /* Decorative ring rails — dashed circles, no rotation */
+  .orbit-rail {
+    border: 1px dashed color-mix(in srgb, var(--surface-500) 50%, transparent);
+    pointer-events: none;
+  }
+  /* Three concentric ring rails — same hue, descending opacity. The
+     inner ring (language) is brightest because it's closest to the
+     brand-white core; outer rings fade into the background. */
+  .orbit-outer.orbit-rail  { border-color: color-mix(in srgb, var(--brand-500) 18%, transparent); }
+  .orbit-middle.orbit-rail { border-color: color-mix(in srgb, var(--brand-500) 30%, transparent); }
+  .orbit-inner.orbit-rail  { border-color: color-mix(in srgb, var(--brand-500) 45%, transparent); }
+
+  /* Spin animations — apply to the orbit container, NOT the items.
+     Items absolute-position at angle --a, then counter-rotate so labels
+     stay readable. */
+  .orbit-spin { transform-origin: center; }
+  .spin-40s     { animation: spinCW 40s linear infinite; }
+  .spin-40s-rev { animation: spinCCW 40s linear infinite; }
+  .spin-60s     { animation: spinCW 60s linear infinite; }
+  .spin-60s-rev { animation: spinCCW 60s linear infinite; }
+  .spin-90s     { animation: spinCW 90s linear infinite; }
+  .spin-90s-rev { animation: spinCCW 90s linear infinite; }
+  @keyframes spinCW  { to { transform: translate(-50%, -50%) rotate(360deg); } }
+  @keyframes spinCCW { to { transform: translate(-50%, -50%) rotate(-360deg); } }
+
+  /* Item: positioned at top-centre of its orbit, then rotated to angle.
+     Inner element counter-rotates back so the label stays upright. */
+  .orbit-item {
+    position: absolute;
+    top: 50%; left: 50%;
+    width: 0; height: 0;
+    transform: rotate(var(--a, 0deg)) translateY(calc(var(--orbit-r, 50%) * -1));
+  }
+  .orbit-outer  .orbit-item { --orbit-r: 48%; }
+  .orbit-middle .orbit-item { --orbit-r: 34%; }
+  .orbit-inner  .orbit-item { --orbit-r: 19%; }
+
+  /* The actual badge — a pill that counter-rotates so it stays horizontal.
+     Sits centred above the orbit-item's translate origin. */
+  .orbit-counter {
+    position: absolute;
+    transform-origin: center;
+    /* Bring centre back to (0,0) of the item, then translate it back so
+       the badge straddles the orbit ring nicely. */
+    transform: translate(-50%, -50%);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background: var(--surface-800);
+    border: 1px solid var(--surface-600);
+    border-radius: 9999px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--surface-100);
+    white-space: nowrap;
+    animation: spinCCW var(--cs, 60s) linear infinite;
+  }
+  .orbit-counter.spin-40s     { animation: spinCCW 40s linear infinite; }
+  .orbit-counter.spin-40s-rev { animation: spinCW  40s linear infinite; }
+  .orbit-counter.spin-60s     { animation: spinCCW 60s linear infinite; }
+  .orbit-counter.spin-60s-rev { animation: spinCW  60s linear infinite; }
+  .orbit-counter.spin-90s     { animation: spinCCW 90s linear infinite; }
+  .orbit-counter.spin-90s-rev { animation: spinCW  90s linear infinite; }
+  /* Counter-rotation keyframes preserve the original translate(-50%,-50%) */
+  @keyframes counterCW  { to { transform: translate(-50%, -50%) rotate(360deg); } }
+  @keyframes counterCCW { to { transform: translate(-50%, -50%) rotate(-360deg); } }
+  .orbit-counter.spin-40s, .orbit-counter.spin-60s, .orbit-counter.spin-90s     { animation-name: counterCCW; }
+  .orbit-counter.spin-40s-rev, .orbit-counter.spin-60s-rev, .orbit-counter.spin-90s-rev { animation-name: counterCW; }
+
+  .orbit-tag {
+    color: var(--accent);
+    font-weight: 700;
+    font-size: 9px;
+    letter-spacing: 0.06em;
+  }
+
+  /* Centre disc — Tubelane wordmark with a soft cyan halo. */
+  .orbit-core {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 22%;
+    aspect-ratio: 1 / 1;
+    display: grid;
+    place-items: center;
+    z-index: 5;
+  }
+  .orbit-core-glow {
+    position: absolute;
+    inset: -25%;
+    border-radius: 9999px;
+    background: radial-gradient(closest-side, color-mix(in srgb, var(--accent) 50%, transparent), transparent 70%);
+    filter: blur(28px);
+    pointer-events: none;
+  }
+  .orbit-core-disc {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    border-radius: 9999px;
+    background: radial-gradient(circle, var(--surface-800), var(--surface-900));
+    border: 1px solid color-mix(in srgb, var(--accent) 50%, transparent);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 60px color-mix(in srgb, var(--accent) 20%, transparent);
+  }
+
+  /* Pause animations on hover so users can read the labels comfortably. */
+  .orbital-stage:hover .orbit-spin,
+  .orbital-stage:hover .orbit-counter {
+    animation-play-state: paused;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .orbit-spin, .orbit-counter { animation: none !important; }
+  }
+</style>

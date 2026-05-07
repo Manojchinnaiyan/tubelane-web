@@ -1,0 +1,40 @@
+---
+// ── Manifesto pull-quote ────────────────────────────────────────────────────
+// Big, opinionated typographic break between content sections — gives
+// the page a publication / magazine rhythm rather than the default
+// "section after section after section" SaaS feel. Single, large
+// pull-quote with an offset attribution block below.
+
+interface Props {
+  quote: string;
+  attribution?: string;
+  align?: "left" | "center";
+}
+
+const { quote, attribution, align = "left" } = Astro.props;
+---
+
+<section class="border-t border-surface-700 relative overflow-hidden bg-surface-900">
+  <div class="orb orb-a w-72 h-72 -top-32 -right-20 opacity-25" data-parallax="0.08" aria-hidden="true"></div>
+  <div class="max-w-5xl mx-auto px-4 sm:px-6 py-24 sm:py-36">
+    <div
+      class={`reveal ${align === "center" ? "text-center mx-auto max-w-3xl" : ""}`}
+    >
+      {/* Decorative quotation mark */}
+      <span
+        class="block text-[120px] sm:text-[180px] leading-none text-surface-700 font-serif select-none"
+        aria-hidden="true"
+      >&ldquo;</span>
+      <p
+        class="text-3xl sm:text-5xl lg:text-6xl font-semibold tracking-tight text-surface-50 leading-[1.1] -mt-16 sm:-mt-24 max-w-4xl"
+      >
+        {quote}
+      </p>
+      {attribution && (
+        <p class="mt-10 sm:mt-12 text-xs font-mono text-surface-500 tracking-widest uppercase">
+          — {attribution}
+        </p>
+      )}
+    </div>
+  </div>
+</section>

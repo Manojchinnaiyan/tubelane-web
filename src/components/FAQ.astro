@@ -1,0 +1,75 @@
+---
+// ── FAQ ─────────────────────────────────────────────────────────────────────
+// <details>/<summary> = native disclosure widget, zero JS, accessible by
+// default, indexable by Google as FAQPage structured data (we add the
+// JSON-LD inline below — Google explicitly supports this pattern for SEO).
+
+const QA = [
+  {
+    q: "Do I need API keys to use Tubelane?",
+    a: "Yes — Tubelane runs on YOUR API keys for Anthropic, Google, OpenAI, ElevenLabs, etc. We never proxy or store your data. You pay providers directly at their cost; we don't add a markup.",
+  },
+  {
+    q: "Does it work without internet?",
+    a: "The Chatterbox neural voice and macOS system voices run fully offline. Other providers (Claude, Gemini, OpenAI) need internet for their API calls.",
+  },
+  {
+    q: "What does it cost to run a video?",
+    a: "Roughly $0.30–$2 per video depending on model choice. Imagen 4 Ultra + Claude Opus is the premium path; Gemini 3 Flash + Claude Haiku is the budget path. You see the actual cost per provider in Settings.",
+  },
+  {
+    q: "Will my channel get demonetized for AI content?",
+    a: "Tubelane outputs are MP4s — YouTube can't detect AI. What matters for monetization is originality and value, not generation method. Channels using AI pipelines monetize fine; low-effort spam doesn't, regardless of how it's made.",
+  },
+  {
+    q: "Mac only?",
+    a: "Mac first. Windows and Linux builds are coming next — same Tauri build system, just needs platform-specific testing.",
+  },
+  {
+    q: "Open source?",
+    a: "Not yet. Source may go open after the v1 launch. The app is local-only by design — your scripts, voiceovers, and videos never leave your machine.",
+  },
+];
+
+// FAQPage JSON-LD — Google uses this to surface FAQ rich-result snippets
+// directly in search. Same content, alternate format. Lives in the
+// section's local script tag so it's only emitted when this component is
+// rendered.
+const faqLd = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: QA.map((qa) => ({
+    "@type": "Question",
+    name: qa.q,
+    acceptedAnswer: { "@type": "Answer", text: qa.a },
+  })),
+};
+---
+
+<section id="faq" class="border-t border-surface-700 bg-surface-800/50">
+  <div class="max-w-3xl mx-auto px-4 sm:px-6 py-20 sm:py-28">
+    <div class="reveal mb-12">
+      <p class="text-xs font-mono text-accent mb-3 tracking-wider">$ faq</p>
+      <h2 class="text-3xl sm:text-4xl font-semibold tracking-tight text-surface-50">
+        Things people keep asking.
+      </h2>
+    </div>
+
+    <div class="space-y-2">
+      {QA.map((qa, i) => (
+        <details
+          class="reveal bg-surface-900 border border-surface-700 group open:border-surface-500"
+          style={`transition-delay: ${i * 40}ms`}
+        >
+          <summary class="cursor-pointer list-none flex items-center justify-between gap-4 px-5 py-4 text-sm font-medium text-surface-100 hover:text-surface-50">
+            {qa.q}
+            <span class="text-surface-500 text-xs font-mono group-open:rotate-45 transition-transform">+</span>
+          </summary>
+          <p class="px-5 pb-5 text-sm text-surface-300 leading-relaxed">{qa.a}</p>
+        </details>
+      ))}
+    </div>
+  </div>
+
+  <script type="application/ld+json" is:inline set:html={JSON.stringify(faqLd)} />
+</section>

@@ -1,0 +1,332 @@
+@import "tailwindcss";
+
+/*
+  Tubelane web theme — mirrors the desktop app palette so the marketing
+  site feels native to anyone who's used the app. Surface scale is the
+  same dark-first ramp; brand-500 is white in dark mode (high-contrast
+  accent on near-black). Single-mode (dark) site for now — matches the
+  default app theme.
+*/
+@theme inline {
+  --color-surface-900: var(--surface-900);
+  --color-surface-800: var(--surface-800);
+  --color-surface-700: var(--surface-700);
+  --color-surface-600: var(--surface-600);
+  --color-surface-500: var(--surface-500);
+  --color-surface-400: var(--surface-400);
+  --color-surface-300: var(--surface-300);
+  --color-surface-200: var(--surface-200);
+  --color-surface-100: var(--surface-100);
+  --color-surface-50:  var(--surface-50);
+
+  --color-brand-600: var(--brand-600);
+  --color-brand-500: var(--brand-500);
+  --color-brand-400: var(--brand-400);
+  --color-accent:    var(--accent);
+
+  --font-sans: "Inter", system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", "Fira Code", ui-monospace, monospace;
+}
+
+:root {
+  color-scheme: dark;
+
+  --surface-900: #000000;
+  --surface-800: #0d0d0d;
+  --surface-700: #1a1a1a;
+  --surface-600: #2e2e2e;
+  --surface-500: #808080;
+  --surface-400: #a3a3a3;
+  --surface-300: #c4c4c4;
+  --surface-200: #d8d8d8;
+  --surface-100: #ececec;
+  --surface-50:  #ffffff;
+
+  --brand-600: #d9d9d9;
+  --brand-500: #ffffff;
+  --brand-400: #e6e6e6;
+  /* Web matches the desktop app's strict-monochrome theme: no chromatic
+     accent. `--accent` aliases brand-500 (pure white) so all the places
+     that read `var(--accent)` (particles, orbital rings, timeline glow,
+     count-up suffixes, etc.) stay in the same black/white palette as
+     the desktop app. Easy to flip back to a coloured accent later by
+     redefining this single token. */
+  --accent:    var(--brand-500);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--surface-900);
+  color: var(--surface-50);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Subtle terminal-cursor blink for the typed hero line */
+.cursor::after {
+  content: "▌";
+  display: inline-block;
+  margin-left: 2px;
+  color: var(--accent);
+  animation: blink 1s steps(2, start) infinite;
+}
+@keyframes blink {
+  to { visibility: hidden; }
+}
+
+/* Scroll reveal — element enters viewport, slides up + fades in.
+   Driven by IntersectionObserver via src/scripts/scroll-reveal.ts.
+   Pure CSS so the page is readable without JS (graceful fallback). */
+.reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 600ms ease-out, transform 600ms ease-out;
+  will-change: opacity, transform;
+}
+.reveal.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+@media (prefers-reduced-motion: reduce) {
+  .reveal { opacity: 1; transform: none; transition: none; }
+  .cursor::after { animation: none; }
+}
+
+/* Decorative scanline grid behind the hero — adds the "terminal CRT" feel
+   without dropping a heavy SVG. Pure CSS gradient, GPU-friendly. */
+.bg-grid {
+  background-image:
+    linear-gradient(to right, color-mix(in srgb, var(--surface-700) 60%, transparent) 1px, transparent 1px),
+    linear-gradient(to bottom, color-mix(in srgb, var(--surface-700) 60%, transparent) 1px, transparent 1px);
+  background-size: 48px 48px;
+  background-position: -1px -1px;
+  -webkit-mask-image: radial-gradient(ellipse at 50% 30%, #000 35%, transparent 75%);
+          mask-image: radial-gradient(ellipse at 50% 30%, #000 35%, transparent 75%);
+}
+
+/* Glow halo behind the icon / hero block */
+.glow {
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--accent) 35%, transparent), transparent 70%);
+  filter: blur(28px);
+}
+
+/* ── Mouse spotlight ──────────────────────────────────────────────────────
+   Hero region renders a soft glowing circle that follows the cursor. JS
+   updates --mx / --my on the parent. Pure CSS does the rest. Disabled on
+   touch (no hover) and reduced-motion. */
+.spotlight {
+  background: radial-gradient(
+    420px circle at var(--mx, 50%) var(--my, 30%),
+    color-mix(in srgb, var(--accent) 20%, transparent),
+    transparent 60%
+  );
+  pointer-events: none;
+  transition: opacity 200ms ease-out;
+}
+@media (hover: none), (prefers-reduced-motion: reduce) {
+  .spotlight { display: none; }
+}
+
+/* ── Floating orbs ────────────────────────────────────────────────────────
+   Decorative blurred gradient orbs that drift on the hero. GPU-friendly
+   (transform-only animation), GPU rasterized (will-change). */
+.orb {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(60px);
+  opacity: 0.5;
+  pointer-events: none;
+  will-change: transform;
+}
+/* Both orbs use brand-500 with low opacity so they read as soft halos
+   without introducing a second colour to the palette. Two sizes / drift
+   speeds keep them feeling alive instead of static. */
+.orb-a { background: color-mix(in srgb, var(--brand-500) 18%, transparent); animation: drift-a 16s ease-in-out infinite; }
+.orb-b { background: color-mix(in srgb, var(--brand-500) 12%, transparent); animation: drift-b 22s ease-in-out infinite; }
+@keyframes drift-a {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50%      { transform: translate(40px, -30px) scale(1.1); }
+}
+@keyframes drift-b {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50%      { transform: translate(-50px, 40px) scale(1.15); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .orb-a, .orb-b { animation: none; }
+}
+
+/* ── Card tilt + gradient border on hover ────────────────────────────────
+   Feature cards "lift" + show an animated cyan-teal border that draws on
+   from one corner. Subtle 3D tilt with perspective. Apply class via
+   data-hover-tilt; JS reads the cursor and writes --tx / --ty. */
+.tilt {
+  transform: perspective(900px) rotateX(var(--tx, 0deg)) rotateY(var(--ty, 0deg));
+  transform-style: preserve-3d;
+  transition: transform 220ms ease-out, border-color 220ms ease-out;
+  will-change: transform;
+}
+.tilt::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  pointer-events: none;
+  border-radius: inherit;
+  background: linear-gradient(
+    135deg,
+    transparent 0%,
+    color-mix(in srgb, var(--accent) 60%, transparent) 50%,
+    transparent 100%
+  );
+  opacity: 0;
+  transition: opacity 240ms ease-out;
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+          mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+  padding: 1px;
+}
+.tilt:hover::before { opacity: 1; }
+@media (prefers-reduced-motion: reduce) {
+  .tilt { transform: none !important; }
+  .tilt::before { display: none; }
+}
+
+/* ── Marquee ─────────────────────────────────────────────────────────────
+   Auto-scrolling horizontal track for the models row. CSS-only (no JS),
+   pauses on hover. The inner duplicates content twice so it loops
+   seamlessly via translateX(-50%). */
+.marquee {
+  display: flex;
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 8%, #000 92%, transparent);
+          mask-image: linear-gradient(to right, transparent, #000 8%, #000 92%, transparent);
+}
+.marquee-track {
+  display: flex;
+  gap: 24px;
+  animation: marquee 38s linear infinite;
+  will-change: transform;
+}
+.marquee:hover .marquee-track { animation-play-state: paused; }
+@keyframes marquee {
+  to { transform: translateX(-50%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .marquee-track { animation: none; }
+}
+
+/* ── Animated count-up ───────────────────────────────────────────────────
+   Hooked up by JS via `data-count-to`. The CSS just sets a tabular-nums
+   style so the digit width doesn't jitter as numbers change. */
+.count-up {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+/* ── Animated underlines for inline links ────────────────────────────────
+   Used in long-form content (privacy/terms). Underline grows from left
+   on hover. */
+.link-underline {
+  background-image: linear-gradient(currentColor, currentColor);
+  background-size: 0% 1px;
+  background-repeat: no-repeat;
+  background-position: 0 100%;
+  transition: background-size 220ms ease;
+}
+.link-underline:hover { background-size: 100% 1px; }
+
+/* ── Pipeline flow line ──────────────────────────────────────────────────
+   Connector pulse between Pipeline cards. Renders a vertical line on
+   mobile / horizontal on lg+ with a moving cyan dot. Drawn with CSS
+   gradient-stops + animation. */
+@keyframes flow-pulse {
+  0%   { background-position: 0 0; }
+  100% { background-position: 200% 0; }
+}
+.flow-line {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    color-mix(in srgb, var(--accent) 70%, transparent) 50%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: flow-pulse 3s linear infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .flow-line { animation: none; }
+}
+
+/* Section dividers — terminal-style rule with $ caret */
+.term-divider::before {
+  content: "$";
+  color: var(--accent);
+  font-family: var(--font-mono);
+  margin-right: 8px;
+}
+
+/* ── Custom cursor ────────────────────────────────────────────────────────
+   Two-layer cursor (dot + ring) injected by scroll-reveal.ts. The native
+   pointer is hidden once .has-custom-cursor lands on <html>. Both layers
+   sit at top:0 left:0 and are translated to (clientX, clientY) via JS.
+   pointer-events: none so they never block clicks. */
+.cursor-dot,
+.cursor-ring {
+  position: fixed;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  z-index: 9999;
+  transition: opacity 200ms ease-out, width 220ms ease-out, height 220ms ease-out, background-color 200ms ease-out;
+  mix-blend-mode: difference;
+}
+.cursor-dot {
+  width: 6px;
+  height: 6px;
+  background: #fff;
+  border-radius: 9999px;
+}
+.cursor-ring {
+  width: 32px;
+  height: 32px;
+  border: 1.5px solid var(--accent);
+  border-radius: 9999px;
+  background: transparent;
+}
+.cursor-ring.is-grow {
+  width: 56px;
+  height: 56px;
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+}
+html.has-custom-cursor,
+html.has-custom-cursor body {
+  cursor: none;
+}
+html.has-custom-cursor a,
+html.has-custom-cursor button,
+html.has-custom-cursor [data-cursor-grow],
+html.has-custom-cursor summary,
+html.has-custom-cursor input,
+html.has-custom-cursor textarea,
+html.has-custom-cursor select {
+  cursor: none;
+}
+@media (hover: none), (prefers-reduced-motion: reduce) {
+  .cursor-dot, .cursor-ring { display: none; }
+  html.has-custom-cursor,
+  html.has-custom-cursor body,
+  html.has-custom-cursor * { cursor: auto; }
+}
+
+/* ── Lenis-managed scroll ─────────────────────────────────────────────────
+   When Lenis is active it owns the scroll. Disable native smooth-scroll on
+   <html> so the two systems don't fight. CSS `overscroll-behavior: none`
+   prevents browser pull-to-refresh from interrupting the smooth feel. */
+html.has-lenis {
+  scroll-behavior: auto;
+  overscroll-behavior: none;
+}
